@@ -27,12 +27,11 @@ export function gradeAnswer(element, answer = {}, language = 'zh') {
   const name = clean(answer.name);
   const englishAliases = { Al: ['aluminium', 'aluminum'], Cs: ['caesium', 'cesium'], S: ['sulfur', 'sulphur'] };
   const names = language === 'en' ? (englishAliases[element.symbol] || [element.en.toLowerCase()]) : [element.zh];
-  const symbolCorrect = symbol === element.symbol;
+  const symbolCorrect = symbol.toLowerCase() === element.symbol.toLowerCase();
   const nameCorrect = names.includes(language === 'en' ? name.toLowerCase() : name);
   return {
     z: element.z, symbol, name, symbolCorrect, nameCorrect,
     symbolBlank: !symbol, nameBlank: !name,
-    caseError: !!symbol && !symbolCorrect && symbol.toLowerCase() === element.symbol.toLowerCase(),
     correct: symbolCorrect && nameCorrect,
     expectedSymbol: element.symbol, expectedName: element[language],
   };

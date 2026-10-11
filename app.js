@@ -1,5 +1,5 @@
 import { elements, byNumber } from './elements.js';
-import { selectElements, getPoolIds, gradeSession, restoreSession } from './logic.js?v=compact-20261011';
+import { selectElements, getPoolIds, gradeSession, restoreSession } from './logic.js?v=case-insensitive-20261011';
 const $ = id => document.getElementById(id);
 const KEY = 'element-room-v1';
 let mode = 'first', manual = new Set(), picking = false, toastTimer;
@@ -27,7 +27,6 @@ function createInput(e, field, report) {
   input.type='text';input.value=session.answers[e.z]?.[field] || '';
   input.placeholder=field==='symbol'?'符号':session.language==='zh'?'名称':'Name';
   input.setAttribute('aria-label',`第 ${e.z} 号元素${field==='symbol'?'符号':session.language==='zh'?'中文名称':'英文名称'}`);
-  if(field==='symbol')input.title='符号区分大小写';
   input.dataset.z=e.z;input.dataset.field=field;input.maxLength=field==='symbol'?8:32;
   input.autocomplete='off';input.spellcheck=false;input.setAttribute('autocorrect','off');input.setAttribute('autocapitalize','off');
   if(field==='symbol' || session.language==='en')input.setAttribute('inputmode','text');
@@ -50,7 +49,7 @@ function renderTable() {
     cell.style.gridColumn=e.col+1;cell.style.gridRow=e.row+1;cell.dataset.number=e.z;
     cell.append(node('span','atomic-number',e.z));
     if(picking){cell.type='button';cell.setAttribute('aria-label',`${selected?'取消选择':'选择'}第 ${e.z} 号元素`);cell.setAttribute('aria-pressed',String(selected));cell.append(node('span','pick-label',selected?'✓':'+'));cell.addEventListener('click',()=>{manual.has(e.z)?manual.delete(e.z):manual.add(e.z);renderTable();updateSelection();table.querySelector(`[data-number="${e.z}"]`)?.focus({preventScroll:true});});}
-    else if(selected){cell.append(createInput(e,'symbol',report),createInput(e,'name',report));if(report)cell.append(node('span','grade-status',report.correct?'✓':report.caseError?'大小写':report.symbolBlank&&report.nameBlank?'未填':'错误'));}
+    else if(selected){cell.append(createInput(e,'symbol',report),createInput(e,'name',report));if(report)cell.append(node('span','grade-status',report.correct?'✓':report.symbolBlank&&report.nameBlank?'未填':'错误'));}
     table.append(cell);
   }
   updateProgress();
@@ -83,7 +82,7 @@ function renderResults(){
   for(const r of result.details.filter(r=>!r.correct)){
     const e=byNumber.get(r.z),row=node('div','mistake-row'),text=node('div');row.append(node('div','mistake-symbol',e.symbol));
     text.append(node('small','',`原子序数 ${e.z}`),node('strong','',session.language==='zh'?e.zh:e.en));
-    if(!r.symbolCorrect)text.append(node('p','',r.symbolBlank?'符号漏填':r.caseError?`符号：${r.symbol} → ${e.symbol}（注意大小写）`:`符号：${r.symbol} → ${e.symbol}`));
+    if(!r.symbolCorrect)text.append(node('p','',r.symbolBlank?'符号漏填':`符号：${r.symbol} → ${e.symbol}`));
     if(!r.nameCorrect)text.append(node('p','',r.nameBlank?'名称漏填':`名称：${r.name} → ${e[session.language]}`));
     row.append(text);list.append(row);
   }
