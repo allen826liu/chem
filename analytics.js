@@ -9,7 +9,7 @@ const status = document.getElementById('visit-status');
 
 function unavailable() {
   visitors.textContent = views.textContent = '—';
-  status.textContent = '暂时无法读取统计，可以继续默写；稍后刷新页面重试。';
+  status.textContent = '统计暂不可用';
 }
 
 async function recordVisit() {
@@ -32,7 +32,7 @@ async function recordVisit() {
         !Number.isSafeInteger(total) || total < unique) throw new Error('Invalid statistics');
     visitors.textContent = unique.toLocaleString('zh-CN');
     views.textContent = total.toLocaleString('zh-CN');
-    status.textContent = '统计已更新；刷新会增加访问次数，访问人数会尽量去重。';
+    status.textContent = '';
     const marker = response.headers.get('Set-Bsz-Identity');
     try { if (marker && marker.length <= 4096) localStorage.setItem(KEY, marker); } catch {}
   } catch {
@@ -55,5 +55,5 @@ if (location.origin === 'https://allen826liu.github.io' &&
   start();
 } else {
   visitors.textContent = views.textContent = '—';
-  status.textContent = '预览页面不计入正式网站的访问统计。';
+  status.textContent = '';
 }
