@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#125b63">
+  <meta name="description" content="在空白元素周期表上默写符号和名称。自选默写数量、随机抽题、自动批改与错题重练。">
+  <title>元素默写室 · 把元素写进记忆</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%23125b63'/%3E%3Ctext x='32' y='44' text-anchor='middle' font-family='Arial' font-size='39' font-weight='bold' fill='white'%3EH%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <div class="page">
+    <header class="site-header">
+      <a class="brand" href="./" aria-label="元素默写室首页"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>元素默写室</a>
+      <span class="header-note">一点一点，记住整个周期表。</span>
+      <button class="quiet" id="wrong-bank">错题本 <span id="wrong-count">0</span></button>
+    </header>
+    <main>
+      <section class="intro" aria-labelledby="heading">
+        <div><h1 id="heading">把元素，写进记忆。</h1><p>从一张空白周期表开始。选好范围，默写符号和名称，看看你记住了多少。</p></div>
+        <div class="intro-stamp" aria-hidden="true"><span>从 1 到 118</span><div class="mini-line"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+      </section>
+      <section class="settings" aria-label="设置默写范围">
+        <div class="setting-group mode-group"><span class="setting-label">怎么默</span><div class="segmented" role="group" aria-label="默写方式"><button data-mode="first" aria-pressed="true" class="active">按顺序</button><button data-mode="random" aria-pressed="false">随机抽</button><button data-mode="manual" aria-pressed="false">自己选</button></div></div>
+        <div class="setting-group count-group"><label class="setting-label" for="count">默几个</label><div class="count-control"><button id="minus" aria-label="减少默写数量">−</button><input id="count" type="number" min="1" max="118" value="20" aria-describedby="count-limit"><button id="plus" aria-label="增加默写数量">＋</button><span>个</span></div><small id="count-limit">可选 1–118 个</small></div>
+        <div class="setting-group"><label class="setting-label" for="pool">练习范围</label><select id="pool"><option value="20">前 20 个元素</option><option value="36">前 36 个元素</option><option value="54">前 54 个元素</option><option value="86">前 86 个元素</option><option value="118" selected>全部 118 个</option></select></div>
+        <div class="setting-group"><label class="setting-label" for="language">名称语言</label><select id="language"><option value="zh">中文名称</option><option value="en">英文名称</option></select></div>
+        <button class="primary start-button" id="start">开始默写 <span aria-hidden="true">↗</span></button>
+      </section>
+      <div class="selection-note" id="selection-note" hidden><span id="selection-text">点击格子选择要默写的元素。</span><div><button class="quiet" id="select-all">全选</button><button class="quiet" id="clear-selection">清空选择</button></div></div>
+      <section id="results" class="results" aria-live="polite" hidden></section>
+      <section class="worksheet" aria-labelledby="table-heading">
+        <div class="worksheet-head"><div><span class="live-dot" aria-hidden="true"></span><h2 id="table-heading">这一轮 · 前 20 个元素</h2></div><div class="progress-wrap"><span id="progress-label">已填 0 / 20</span><div class="progress-track" aria-hidden="true"><i id="progress-fill"></i></div></div></div>
+        <div class="worksheet-instructions"><span id="instructions">在亮起的格子里填写；灰色格子本轮不用默写。</span><span class="keyboard-note">Tab 切换下一空</span></div>
+        <div class="table-scroll" role="region" aria-label="元素周期表，可左右滚动" tabindex="0"><div class="periodic-table" id="periodic-table"></div></div>
+        <div class="worksheet-bottom"><div class="legend"><span><i class="metal"></i>主族金属</span><span><i class="main"></i>其他主族</span><span><i class="transition"></i>过渡金属</span><span><i class="halogen"></i>卤素</span><span><i class="noble"></i>稀有气体</span><span><i class="inner"></i>镧系 / 锕系</span></div><span class="scroll-hint">小屏幕可左右滑动周期表</span></div>
+      </section>
+      <section id="mistake-details" class="mistake-details" hidden aria-labelledby="mistake-title"><h2 id="mistake-title">再记住这些元素</h2><div id="mistake-list"></div></section>
+      <div class="action-bar"><div class="action-note"><strong id="action-title">每一个空格，都是一次记忆练习。</strong><span id="action-tip">符号区分大小写，例如 He；中文名只填元素名。</span></div><div class="actions"><button class="secondary" id="reference">查看完整答案表</button><button class="primary" id="submit">交卷并批改 <span aria-hidden="true">✓</span></button></div></div>
+    </main>
+    <footer><span id="save-status">当前练习自动保存在本机</span><div><span>元素名称参考</span> <a href="https://www.chemsoc.org.cn/news/international/a2613.html" target="_blank" rel="noreferrer">中国化学会</a> <span>与</span> <a href="https://iupac.org/what-we-do/periodic-table-of-elements/" target="_blank" rel="noreferrer">IUPAC</a></div></footer>
+  </div>
+  <dialog id="reference-dialog" aria-labelledby="reference-heading"><div class="dialog-top"><div><h2 id="reference-heading">完整答案表</h2><p>正在默写时，打开答案会先交卷批改。</p></div><button id="close-reference" class="quiet" aria-label="关闭答案表">关闭 ×</button></div><div id="reference-content" class="reference-grid"></div></dialog>
+  <div id="toast" class="toast" role="status" hidden></div>
+</body>
+</html>
