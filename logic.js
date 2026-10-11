@@ -21,6 +21,23 @@ export function selectElements(mode, count, pool, manual = [], random = Math.ran
   return candidates.slice(0, Math.min(count, candidates.length)).sort((a,b) => a-b);
 }
 
+// Follow visible table positions; inactive cells and gaps are skipped.
+export function adjacentInput(ids, z, field, key) {
+  const current = byNumber.get(z);
+  if (!current || !ids.includes(z) || !['symbol', 'name'].includes(field)) return null;
+  if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key)) return null;
+  if (key === 'ArrowDown' && field === 'symbol') return { z, field: 'name' };
+  if (key === 'ArrowUp' && field === 'name') return { z, field: 'symbol' };
+  const horizontal = key === 'ArrowLeft' || key === 'ArrowRight';
+  const axis = horizontal ? 'col' : 'row';
+  const fixed = horizontal ? 'row' : 'col';
+  const direction = key === 'ArrowRight' || key === 'ArrowDown' ? 1 : -1;
+  const next = ids.map(id => byNumber.get(id)).filter(e => e &&
+    e[fixed] === current[fixed] && (e[axis] - current[axis]) * direction > 0
+  ).sort((a, b) => Math.abs(a[axis] - current[axis]) - Math.abs(b[axis] - current[axis]))[0];
+  return next ? { z: next.z, field: horizontal ? field : key === 'ArrowDown' ? 'symbol' : 'name' } : null;
+}
+
 const clean = value => String(value ?? '').normalize('NFKC').trim();
 export function gradeAnswer(element, answer = {}, language = 'zh') {
   const symbol = clean(answer.symbol);

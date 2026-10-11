@@ -1,5 +1,5 @@
 import { elements, byNumber } from './elements.js';
-import { selectElements, getPoolIds, gradeSession, restoreSession } from './logic.js?v=case-insensitive-20261011';
+import { selectElements, getPoolIds, gradeSession, restoreSession, adjacentInput } from './logic.js?v=arrows-20261011';
 const $ = id => document.getElementById(id);
 const KEY = 'element-room-v1';
 let mode = 'first', manual = new Set(), picking = false, toastTimer;
@@ -33,7 +33,17 @@ function createInput(e, field, report) {
   input.disabled=session.graded;
   if(report){const correct=field==='symbol'?report.symbolCorrect:report.nameCorrect;input.classList.add(correct?'right-field':'wrong-field');input.setAttribute('aria-invalid',String(!correct));}
   input.addEventListener('input',()=>{session.answers[e.z] ||= {};session.answers[e.z][field]=input.value;persist();updateProgress();});
-  input.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.isComposing){event.preventDefault();const inputs=[...$('periodic-table').querySelectorAll('input:not(:disabled)')];inputs[(inputs.indexOf(input)+1)%inputs.length]?.focus();}});
+  input.setAttribute('aria-keyshortcuts','ArrowUp ArrowDown ArrowLeft ArrowRight Enter');
+  input.addEventListener('keydown',event=>{
+    if(event.isComposing || event.keyCode===229 || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey)return;
+    if(event.key==='Enter'){
+      event.preventDefault();const inputs=[...$('periodic-table').querySelectorAll('input:not(:disabled)')];
+      inputs[(inputs.indexOf(input)+1)%inputs.length]?.focus();
+    }else if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.key)){
+      event.preventDefault();const next=adjacentInput(session.ids,e.z,field,event.key);
+      if(next)$('periodic-table').querySelector(`input[data-z="${next.z}"][data-field="${next.field}"]:not(:disabled)`)?.focus();
+    }
+  });
   return input;
 }
 function renderTable() {
