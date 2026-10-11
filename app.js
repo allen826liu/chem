@@ -1,5 +1,5 @@
 import { elements, byNumber } from './elements.js';
-import { selectElements, getPoolIds, gradeSession, restoreSession } from './logic.js';
+import { selectElements, getPoolIds, gradeSession, restoreSession } from './logic.js?v=monthly-20261011';
 const $ = id => document.getElementById(id);
 const KEY = 'element-room-v1';
 let mode = 'first', manual = new Set(), picking = false, toastTimer;
