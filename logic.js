@@ -1,8 +1,17 @@
 import { byNumber, elements } from './elements.js';
 
+// Red outline supplied for the monthly exam: 1–38, 49–56 and 81–88.
+export function getPoolIds(pool) {
+  if (pool === 'monthly') {
+    return elements.filter(e => e.z <= 38 || (e.z >= 49 && e.z <= 56) ||
+      (e.z >= 81 && e.z <= 88)).map(e => e.z);
+  }
+  return elements.filter(e => e.z <= Number(pool)).map(e => e.z);
+}
+
 export function selectElements(mode, count, pool, manual = [], random = Math.random) {
   if (mode === 'manual') return [...new Set(manual)].filter(z => byNumber.has(z)).sort((a,b) => a-b);
-  const candidates = elements.filter(e => e.z <= pool).map(e => e.z);
+  const candidates = getPoolIds(pool);
   if (mode === 'random') {
     for (let i = candidates.length - 1; i > 0; i--) {
       const j = Math.floor(random() * (i + 1));

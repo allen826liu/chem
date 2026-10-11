@@ -1,5 +1,5 @@
 import { elements, byNumber } from './elements.js';
-import { selectElements, gradeSession, restoreSession } from './logic.js';
+import { selectElements, getPoolIds, gradeSession, restoreSession } from './logic.js';
 const $ = id => document.getElementById(id);
 const KEY = 'element-room-v1';
 let mode = 'first', manual = new Set(), picking = false, toastTimer;
@@ -7,10 +7,11 @@ let saved = {};
 try { saved = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch {}
 let wrongBank = new Set((Array.isArray(saved.wrong) ? saved.wrong : []).filter(z => byNumber.has(z)));
 let session = restoreSession(saved.session) || { ids: selectElements('first',20,118), language:'zh',answers:{},graded:false };
+if ([...$('pool').options].some(option => option.value === String(saved.pool))) $('pool').value = String(saved.pool);
 $('language').value = session.language;
 $('count').value = session.ids.length;
 function persist() {
-  try { localStorage.setItem(KEY,JSON.stringify({ session, wrong:[...wrongBank] })); }
+  try { localStorage.setItem(KEY,JSON.stringify({ session, wrong:[...wrongBank], pool:$('pool').value })); }
   catch { $('save-status').textContent = '浏览器未允许保存；关闭页面前请完成本轮练习'; }
   $('wrong-count').textContent = wrongBank.size;
 }
@@ -63,8 +64,8 @@ function updateSettings() {
   if(picking){$('results').hidden=true;$('mistake-details').hidden=true;$('table-heading').textContent='自己选 · 点击格子选择元素';$('instructions').textContent='已选格子显示勾号；符号和名称在开始后填写。';updateSelection();}
   else{$('start').disabled=false;$('instructions').textContent=session.graded?'本轮已批改。红色输入框是错项，绿色输入框是正确项。':'在亮起的格子里填写；灰色格子本轮不用默写。';}
 }
-function countValue(){const n=Number($('count').value),pool=Number($('pool').value);return Math.max(1,Math.min(pool,Number.isFinite(n)?Math.floor(n):20));}
-function syncCount(){const max=Number($('pool').value);$('count').max=max;if(!picking)$('count').value=countValue();$('count-limit').textContent=picking?'点选下方格子':`可选 1–${max} 个`;}
+function countValue(){const n=Number($('count').value),max=getPoolIds($('pool').value).length;return Math.max(1,Math.min(max,Number.isFinite(n)?Math.floor(n):20));}
+function syncCount(){const max=getPoolIds($('pool').value).length;$('count').max=max;if(!picking)$('count').value=countValue();$('count-limit').textContent=picking?'点选下方格子':`可选 1–${max} 个`;$('pool-note').hidden=picking||$('pool').value!=='monthly';}
 function newSession(ids, title) {
   if(!ids.length){notify('先选至少一个元素。');return;}
   session={ids:[...ids].sort((a,b)=>a-b),language:$('language').value,answers:{},graded:false};picking=false;
@@ -96,14 +97,14 @@ function renderResults(){
 }
 function submit(scroll=true){if(picking||session.graded)return;session.graded=true;const result=gradeSession(session);for(const r of result.details){r.correct?wrongBank.delete(r.z):wrongBank.add(r.z);}persist();renderTable();updateSettings();renderResults();if(scroll)$('results').scrollIntoView({behavior:'smooth',block:'center'});}
 for(const button of document.querySelectorAll('[data-mode]'))button.addEventListener('click',()=>{const wasPicking=picking;mode=button.dataset.mode;picking=mode==='manual';for(const b of document.querySelectorAll('[data-mode]')){b.classList.toggle('active',b===button);b.setAttribute('aria-pressed',String(b===button));}if(picking&&!wasPicking)manual=new Set(session.ids);if(!picking){$('count').value=session.ids.length;$('table-heading').textContent=`这一轮 · ${session.ids.length} 个元素`;}syncCount();updateSettings();renderTable();if(!picking&&session.graded)renderResults();});
-$('start').addEventListener('click',()=>{const ids=selectElements(mode,countValue(),Number($('pool').value),[...manual]);newSession(ids,mode==='first'?`这一轮 · 前 ${ids.length} 个元素`:mode==='random'?`随机默写 · ${ids.length} 个元素`:`自选默写 · ${ids.length} 个元素`);notify(`准备好了，这轮默 ${ids.length} 个。`);});
-$('count').addEventListener('change',syncCount);$('pool').addEventListener('change',syncCount);
+$('start').addEventListener('click',()=>{const pool=$('pool').value;const ids=selectElements(mode,countValue(),pool,[...manual]);const title=pool==='monthly'&&mode!=='manual'?`月考范围 · ${mode==='random'?'随机抽':'按顺序'} ${ids.length} / 54 个`:mode==='first'?`这一轮 · 前 ${ids.length} 个元素`:mode==='random'?`随机默写 · ${ids.length} 个元素`:`自选默写 · ${ids.length} 个元素`;newSession(ids,title);notify(`准备好了，这轮默 ${ids.length} 个。`);});
+$('count').addEventListener('change',syncCount);$('pool').addEventListener('change',()=>{if($('pool').value==='monthly')$('count').value=getPoolIds('monthly').length;syncCount();persist();});
 $('minus').addEventListener('click',()=>{$('count').value=countValue()-1;syncCount();});$('plus').addEventListener('click',()=>{$('count').value=countValue()+1;syncCount();});
 $('select-all').addEventListener('click',()=>{manual=new Set(elements.map(e=>e.z));renderTable();updateSelection();});$('clear-selection').addEventListener('click',()=>{manual.clear();renderTable();updateSelection();});
 $('submit').addEventListener('click',()=>submit());
 $('wrong-bank').addEventListener('click',()=>{if(!wrongBank.size){notify('还没有错题。完成一轮批改后，错题会自动收在这里。');return;}newSession([...wrongBank],`错题本 · ${wrongBank.size} 个元素`);notify('已开始错题本练习，答对的元素会自动移出。');});
 $('reference').addEventListener('click',()=>{submit(false);const content=$('reference-content');content.replaceChildren();for(const e of elements){const item=node('div','reference-item');item.append(node('span','symbol',e.symbol));const names=node('div');names.append(node('small','',e.z),node('strong','',e.zh),node('span','english-name',e.en));item.append(names);content.append(item);}$('reference-dialog').showModal();});
 $('close-reference').addEventListener('click',()=>$('reference-dialog').close());$('reference-dialog').addEventListener('click',event=>{if(event.target===$('reference-dialog')){const box=$('reference-dialog').getBoundingClientRect();if(event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom)$('reference-dialog').close();}});
-$('table-heading').textContent=`${saved.session?'已恢复这一轮':'这一轮'} · ${session.ids.length} 个元素`;
+$('table-heading').textContent=`${saved.session?'已恢复这一轮':'这一轮'}${$('pool').value==='monthly'&&session.ids.every(z=>getPoolIds('monthly').includes(z))?' · 月考范围':''} · ${session.ids.length} 个元素`;
 $('action-tip').textContent=session.language==='zh'?'符号区分大小写，例如 He；中文名只填元素名。':'符号区分大小写；英文名称不区分大小写，兼容常见英美拼写。';
 syncCount();persist();renderTable();updateSettings();if(session.graded)renderResults();
